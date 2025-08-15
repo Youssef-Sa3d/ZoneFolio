@@ -1,0 +1,98 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+// USER MODELS
+// =====================
+
+model SaaSUser {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  password   String
+  username   String     @unique
+  role       Role       @default(USER)
+  portfolio  Portfolio?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// =====================
+// PORTFOLIO MODELS
+// =====================
+
+model Portfolio {
+  id                String             @id @default(uuid())
+  user              SaaSUser           @relation(fields: [userId], references: [id])
+  userId            String             @unique
+  dashboardEmail    String?            @unique
+  dashboardPassword String?
+  domainType        String?
+  url               String?
+  templateType      String?
+  sections          PortfolioSection[]
+  subscription      Subscription?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model PortfolioSection {
+  id          String    @id @default(uuid())
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id])
+  portfolioId String
+  type        String
+  order       Int
+  content     Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// =====================
+// BUSINESS MODELS
+// =====================
+
+model Subscription {
+  id             String    @id @default(uuid())
+  portfolio      Portfolio @relation(fields: [portfolioId], references: [id])
+  portfolioId    String    @unique
+  planId         String
+  status         SubscriptionStatus @default(ACTIVE)
+  startedAt      DateTime @default(now())
+  expiresAt      DateTime?
+  payments       Payment[]
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+}
+
+model Payment {
+  id             String    @id @default(uuid())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String
+  amount         Float
+  currency       String
+  status         PaymentStatus @default(SUCCESS)
+  paidAt         DateTime @default(now())
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+  PENDING
+}
+
