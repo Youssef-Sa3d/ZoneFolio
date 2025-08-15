@@ -6,7 +6,7 @@ const authRoutes = require('./src/routes/auth');
 const app = express();
 const PORT = process.env.PORT || 8080; 
 
-const allowedOrigins = ["http://localhost:3000", ""];
+const allowedOrigins = ["http://localhost:3000", "https://zonefolio.vercel.app/"];
 
 app.use(
   cors({
