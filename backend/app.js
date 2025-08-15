@@ -6,10 +6,21 @@ const authRoutes = require('./src/routes/auth');
 const app = express();
 const PORT = process.env.PORT || 8080; 
 
-app.use(cors({
-  origin: '*', // frontend origin
-  credentials: true
-}));
+const allowedOrigins = ["http://localhost:3000", ""];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow server-to-server or curl requests
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // <— important
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

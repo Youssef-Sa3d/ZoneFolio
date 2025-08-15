@@ -32,7 +32,7 @@ export default function LoginPage() {
   const mutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
       const res = await axios.post(
-        "http://localhost:3001/auth/login",
+        "https://zonefolio-backend.up.railway.app/auth/login",
         {
           email: data.email,
           password: data.password,

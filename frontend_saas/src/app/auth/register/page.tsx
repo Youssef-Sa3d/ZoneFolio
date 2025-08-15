@@ -35,7 +35,7 @@ export default function RegisterPage() {
   const mutation = useMutation({
     mutationFn: async (data: RegisterFormData) => {
       const res = await axios.post(
-        "http://localhost:3001/auth/register",
+        "https://zonefolio-backend.up.railway.app/auth/register",
         {
           name: data.name,
           username: data.username,

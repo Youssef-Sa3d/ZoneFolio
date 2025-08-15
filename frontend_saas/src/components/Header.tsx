@@ -42,7 +42,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:3001/auth/logout", {
+      await fetch("https://zonefolio-backend.up.railway.app/auth/logout", {
         method: "POST",
         credentials: "include",
       });

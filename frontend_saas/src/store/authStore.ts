@@ -13,7 +13,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     setIsAuthenticated: (value) => set({ isAuthenticated: value }),
     checkAuth: async () => {
         try {
-            const res = await axios.get("http://localhost:3001/auth/me", {
+            const res = await axios.get("https://zonefolio-backend.up.railway.app/auth/me", {
                 withCredentials: true,
             });
             if (res.status === 200) {
