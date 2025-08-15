@@ -18,6 +18,6 @@ app.use(cookieParser());
 
 app.use("/auth", authRoutes);
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0" ,  () => {
   console.log(`Server is running at http://localhost:${PORT}/`);
 });
