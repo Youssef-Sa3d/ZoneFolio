@@ -4,8 +4,8 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node app.js",
     "dev": "nodemon app.js",
+    "start": "node app.js",
     "postinstall": "prisma generate"
   },
   "keywords": [],
