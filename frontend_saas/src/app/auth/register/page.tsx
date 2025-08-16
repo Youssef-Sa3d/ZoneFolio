@@ -49,11 +49,14 @@ export default function RegisterPage() {
     onSuccess: async () => {
       // refresh global auth state
       await checkAuth();
-      // go home
-      router.push("/");
+      // go to verification
+      router.push("/auth/register/verification");
     },
-    onError: () => {
-      alert("Registration failed. Please try again.");
+    onError: (error: unknown) => {
+      alert(
+        (error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+          "Registration failed. Please try again."
+      );
     },
   });
 
