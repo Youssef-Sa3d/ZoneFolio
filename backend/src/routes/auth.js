@@ -42,12 +42,23 @@ router.post("/register", async (req, res) => {
         });
 
         // Send verification email
-        await sendVerificationEmail(email, verificationCode);
+        try {
+            await sendVerificationEmail(email, verificationCode);
+            return res.status(201).json({
+                message: "Verification code sent to your email",
+                userId: newUser.id,
+            });
+        } catch (emailError) {
+            // Delete user if email fails
+            await prisma.saaSUser.delete({ where: { id: newUser.id } });
 
-        res.status(201).json({
-            message: "Verification code sent to your email",
-            userId: newUser.id,
-        });
+            console.error("Email sending failed:", emailError);
+            return res.status(500).json({
+                error: "Failed to send verification email",
+                details: emailError.message,
+                tip: "Check SMTP credentials and server configuration"
+            });
+        }
 
     } catch (error) {
         res.status(500).json({ error: error.message });
