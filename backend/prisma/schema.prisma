@@ -20,6 +20,9 @@ model SaaSUser {
   username   String     @unique
   role       Role       @default(USER)
   portfolio  Portfolio?
+  isVerified               Boolean  @default(false)
+  verificationCode         String?
+  verificationCodeExpires  DateTime?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 }

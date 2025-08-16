@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/auth');
 
+
 const app = express();
 const PORT = process.env.PORT || 8080; 
 
