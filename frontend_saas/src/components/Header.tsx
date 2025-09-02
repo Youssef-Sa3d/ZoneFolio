@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { FiMenu, FiX } from "react-icons/fi";
 import { useAuthStore } from "../store/authStore";
+import { s } from "motion/react-client";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,6 +40,8 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isMobileMenuOpen]);
+
+  const handleLinkClick = () => setIsMobileMenuOpen(false); // Close menu when clicked
 
   const handleLogout = async () => {
     try {
@@ -147,24 +150,28 @@ const Header = () => {
               <Link
                 href="/"
                 className="hover:text-indigo-600 transition-colors"
+                onClick={handleLinkClick}
               >
                 Home
               </Link>
               <Link
                 href="#features"
                 className="hover:text-indigo-600 transition-colors"
+                onClick={handleLinkClick}
               >
                 Features
               </Link>
               <Link
                 href="#pricing"
                 className="hover:text-indigo-600 transition-colors"
+                onClick={handleLinkClick}
               >
                 Pricing
               </Link>
               <Link
                 href="#contact"
                 className="hover:text-indigo-600 transition-colors"
+                onClick={handleLinkClick}
               >
                 Contact
               </Link>
