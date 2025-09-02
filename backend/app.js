@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/auth');
+const templateRoutes = require('./src/routes/template');
 
 
 const app = express();
@@ -28,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/auth", authRoutes);
+app.use("/templates", templateRoutes);
 
 app.listen(PORT, "0.0.0.0" ,  () => {
   console.log(`Server is running at http://localhost:${PORT}/`);
