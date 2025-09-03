@@ -5,8 +5,15 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import TemplateCard from "@/components/TemplateCard";
 
-
-async function fetchTemplates() {
+type Template = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  previewUrl: string;
+  demoUrl: string;
+};
+async function fetchTemplates(): Promise<Template[]> {
   const { data } = await axios.get(
     "https://zonefolio-backend.up.railway.app/templates/"
   ); 
@@ -19,7 +26,7 @@ export default function Page() {
     isLoading,
     isError,
     error,
-  } = useQuery({
+  } = useQuery<Template[]>({
     queryKey: ["templates"],
     queryFn: fetchTemplates,
   });
@@ -44,8 +51,8 @@ export default function Page() {
     <section className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-50 p-6">
       <h1 className="text-2xl font-bold mb-6">Templates</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
-        {templates?.map((template: any) => (
-          <TemplateCard key={template.id} template={template} />
+        {templates?.map((template, index) => (
+          <TemplateCard key={template.id} {...template} index={index} />
         ))}
       </div>
     </section>
