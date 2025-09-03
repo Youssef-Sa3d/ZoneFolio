@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
                 name: true,
                 description: true,
                 category: true,
-                previewUrl: true,
+                imageUrl: true,
                 demoUrl: true
             },
             orderBy: { createdAt: 'desc' }
