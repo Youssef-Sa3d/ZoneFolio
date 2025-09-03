@@ -94,7 +94,7 @@ export default function Page() {
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-50 p-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+      <div className="flex flex-wrap gap-6 justify-evenly max-w-7xl w-full">
         {templates.map((template, index) => (
           <TemplateCard key={template.id} {...template} index={index} />
         ))}
