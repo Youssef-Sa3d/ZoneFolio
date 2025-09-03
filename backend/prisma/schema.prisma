@@ -40,8 +40,8 @@ model Template {
   name        String
   description String?
   category    String?
-  previewUrl  String
   demoUrl     String
+  imageUrl    String?
   isActive    Boolean   @default(true)
   portfolios  Portfolio[]
   createdAt   DateTime  @default(now())
