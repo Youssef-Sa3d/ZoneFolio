@@ -50,6 +50,7 @@ const Header = () => {
         credentials: "include",
       });
       setIsAuthenticated(false);
+      setIsMobileMenuOpen(false);
     } catch (err) {
       console.error("Logout failed", err);
     }
@@ -182,6 +183,7 @@ const Header = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      onClick={handleLinkClick}
                       className="px-5 py-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-all rounded-md text-left"
                     >
                       Login
@@ -191,6 +193,7 @@ const Header = () => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      onClick={handleLinkClick}
                       className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all text-left"
                     >
                       Get Started

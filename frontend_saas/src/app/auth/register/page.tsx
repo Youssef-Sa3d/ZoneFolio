@@ -65,13 +65,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-gray-50 px-4 sm:px-6 lg:px-8 relative">
-      <Link
-        href="/"
-        className="absolute top-6 left-4 sm:left-6 text-sm font-medium text-indigo-600 hover:underline"
-      >
-        ← Back to Home
-      </Link>
+    <section className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-gray-50 px-4 sm:px-6 lg:px-8 relative pt-24 pb-12">
+      
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}

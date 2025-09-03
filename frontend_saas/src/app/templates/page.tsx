@@ -1,41 +1,53 @@
-// app/under-construction/page.jsx
 "use client";
-import { motion } from "framer-motion";
-import Link from "next/link";
 
-export default function UnderConstructionPage() {
+import React from "react";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import TemplateCard from "@/components/TemplateCard";
+
+
+async function fetchTemplates() {
+  const { data } = await axios.get(
+    "https://zonefolio-backend.up.railway.app/templates/"
+  ); 
+  return data;
+}
+
+export default function Page() {
+  const {
+    data: templates,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["templates"],
+    queryFn: fetchTemplates,
+  });
+
+  if (isLoading) {
+    return (
+      <section className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Loading templates...</p>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">Error: {(error as Error).message}</p>
+      </section>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center"
-      >
-        {/* Title */}
-        <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-          🚧 Page Under Construction
-        </h1>
-
-        {/* Subtitle */}
-        <p className="text-gray-400 text-lg max-w-md mx-auto">
-          We’re working hard to bring you something amazing. This page will be
-          available soon.
-        </p>
-
-        {/* Decorative element */}
-        <div className="mt-8 inline-flex px-6 py-3 rounded-full bg-yellow-500 text-gray-900 font-semibold shadow-lg">
-          Coming Soon
-        </div>
-
-        {/* Home Button */}
-        <Link
-          href="/"
-          className="mt-6 inline-block px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-lg transition-colors"
-        >
-          Go Home
-        </Link>
-      </motion.div>
-    </div>
+    <section className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-50 p-6">
+      <h1 className="text-2xl font-bold mb-6">Templates</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+        {templates?.map((template: any) => (
+          <TemplateCard key={template.id} template={template} />
+        ))}
+      </div>
+    </section>
   );
 }
