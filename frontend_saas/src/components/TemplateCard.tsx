@@ -7,7 +7,7 @@ type TemplateCardProps = {
   name: string;
   description: string;
   category: string;
-  previewUrl: string;
+  imageUrl: string;
   demoUrl: string;
   index: number;
 };
@@ -16,7 +16,7 @@ export default function TemplateCard({
   name,
   description,
   category,
-  previewUrl,
+  imageUrl,
   demoUrl,
   index,
 }: TemplateCardProps) {
@@ -29,7 +29,7 @@ export default function TemplateCard({
       className="border rounded-xl shadow-md p-4 bg-white hover:shadow-lg transition"
     >
       <Image
-        src={previewUrl}
+        src={imageUrl}
         alt={name}
         width={400} 
         height={200}

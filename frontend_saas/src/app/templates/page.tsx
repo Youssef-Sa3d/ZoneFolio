@@ -11,7 +11,7 @@ type Template = {
   name: string;
   description: string;
   category: string;
-  previewUrl: string;
+  imageUrl: string;
   demoUrl: string;
 };
 
