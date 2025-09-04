@@ -18,7 +18,7 @@ model SaaSUser {
   password   String
   username   String     @unique
   role       Role       @default(USER)
-  portfolio  Portfolio?
+  portfolio  Portfolio[]
   isVerified               Boolean  @default(false)
   verificationCode         String?
   verificationCodeExpires  DateTime?
@@ -55,7 +55,7 @@ model Template {
 model Portfolio {
   id                String             @id @default(uuid())
   user              SaaSUser           @relation(fields: [userId], references: [id])
-  userId            String             @unique
+  userId            String             
   dashboardEmail    String?            @unique
   dashboardPassword String?
   domainType        String?

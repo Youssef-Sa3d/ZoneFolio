@@ -4,6 +4,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import Image from "next/image";
 import { FiPlus, FiX } from "react-icons/fi";
 import { useUserStore } from "@/store/userStore";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 type PortfolioModalProps = {
   templateId: string;
@@ -18,10 +20,11 @@ export default function PortfolioModal({
   templateImage,
   onClose,
 }: PortfolioModalProps) {
-  const userId = useUserStore((state) => state.id);
+    const { id } = useUserStore();
+    console.log("userId in PortfolioModal:", id);
   const { register, control, handleSubmit } = useForm({
     defaultValues: {
-      userId: userId,
+      userId: id,
       templateId: templateId,
       hero: {
         title: "",
@@ -135,9 +138,29 @@ export default function PortfolioModal({
     };
   };
 
+  const mutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const res = await axios.post(
+        "https://zonefolio-backend.up.railway.app/portfolio/",
+        data,
+        { withCredentials: true }
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      onClose();
+    },
+    onError: (error: unknown) => {
+      alert(
+        (error as { response?: { data?: { error?: string } } }).response?.data
+          ?.error || "Failed to create portfolio. Please try again."
+      );
+    },
+  });
+
   const onSubmit = (data: FormData) => {
     console.log(data);
-    // Handle form submission
+    mutation.mutate(data);
   };
 
   return (

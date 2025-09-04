@@ -42,6 +42,7 @@ export default function LoginPage() {
         },
         { withCredentials: true } // send cookies
       );
+      console.log(res.data.user);
       setUser(res.data.user); // Update global user state
       return res.data;
       

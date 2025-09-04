@@ -49,8 +49,8 @@ router.post("/", async (req, res) => {
 
         res.status(201).json({ message: "Portfolio created successfully", portfolioId: portfolio.id });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error("Portfolio creation error:", error);
+        res.status(500).json({ error: error.message });
     }
 });
 
