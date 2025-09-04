@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
             return res.status(404).json({ error: "Template not found" });
         }
 
-        // 3) Create portfolio in DB
+        // Generate random dashboard credentials
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const signs = ["!", "@", "#", "$", "%", "&"];
         const randomSign = signs[Math.floor(Math.random() * signs.length)];
@@ -34,84 +34,92 @@ router.post("/", async (req, res) => {
         const dashboardEmail = `${username}${randomNum}@zonefolio.com`;
         const dashboardPassword = `${username}${randomNum}${randomSign}`;
 
+        // 3) Try GitHub repo generate FIRST
+        const githubToken = process.env.GITHUB_TOKEN;
+        const templateOwner = "zonefolio-platform";
+        const templateRepo = "Na8am-Template";
+        const newRepoName = `${user.username}-zonefolio`;
+
+        let githubResponse;
+        try {
+            githubResponse = await axios.post(
+                `https://api.github.com/repos/${templateOwner}/${templateRepo}/generate`,
+                {
+                    owner: "zonefolio-platform",
+                    name: newRepoName,
+                    private: false,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${githubToken}`,
+                        Accept: "application/vnd.github+json",
+                    },
+                }
+            );
+        } catch (err) {
+            console.error("GitHub clone error:", err.response?.data || err.message);
+            return res.status(500).json({ error: "GitHub repo clone failed", details: err.response?.data });
+        }
+
+        // 4) Try Vercel deploy SECOND
+        const vercelToken = process.env.VERCEL_TOKEN;
+        const vercelTeamId = process.env.VERCEL_TEAM_ID; // optional
+        const apiUrl = `https://zonefolio-backend.up.railway.app/portfolio/${user.username}`;
+
+        let vercelResponse;
+        try {
+            vercelResponse = await axios.post(
+                "https://api.vercel.com/v9/projects",
+                {
+                    name: newRepoName,
+                    gitRepository: {
+                        type: "github",
+                        repo: `zonefolio-platform/${newRepoName}`,
+                    },
+                    environmentVariables: [
+                        {
+                            key: "NEXT_PUBLIC_DATA_API_URL",
+                            value: apiUrl,
+                            target: ["production", "preview", "development"],
+                        },
+                    ],
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${vercelToken}`,
+                    },
+                    params: vercelTeamId ? { teamId: vercelTeamId } : {},
+                }
+            );
+        } catch (err) {
+            console.error("Vercel deploy error:", err.response?.data || err.message);
+            return res.status(500).json({ error: "Vercel deploy failed", details: err.response?.data });
+        }
+
+        const deployedUrl = `https://${newRepoName}.vercel.app`;
+
+        // 5) Only now → Save in DB (Portfolio + sections)
         const portfolio = await prisma.portfolio.create({
             data: {
                 userId,
                 templateId,
                 dashboardEmail,
                 dashboardPassword,
-                domainType: "Free", // default MVP
+                domainType: "Free",
+                deployedUrl, // save deployed project link
+                sections: {
+                    create: [
+                        { type: "hero", order: 1, content: hero },
+                        { type: "about", order: 2, content: about },
+                        { type: "projects", order: 3, content: projects },
+                        { type: "contact", order: 4, content: contact },
+                    ],
+                },
             },
+            include: { sections: true },
         });
 
-        // 4) Store portfolio sections
-        const sections = [
-            { type: "hero", order: 1, content: hero },
-            { type: "about", order: 2, content: about },
-            { type: "projects", order: 3, content: projects },
-            { type: "contact", order: 4, content: contact },
-        ];
-
-        await prisma.portfolioSection.createMany({
-            data: sections.map(({ type, order, content }) => ({
-                portfolioId: portfolio.id,
-                type,
-                order,
-                content,
-            })),
-        });
-
-        // 5) Create new GitHub repo from template
-        const githubToken = process.env.GITHUB_TOKEN;
-        const templateOwner = "zonefolio-platform";
-        const templateRepo = "Na8am-Template";
-        const newRepoName = `${user.username}-zonefolio`;
-
-        const githubResponse = await axios.post(
-            `https://api.github.com/repos/${templateOwner}/${templateRepo}/generate`,
-            {
-                owner: "zonefolio-platform", // لازم يكون org/team عندك
-                name: newRepoName,
-                private: false,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${githubToken}`,
-                    Accept: "application/vnd.github+json",
-                },
-            }
-        );
-
-        // 6) Deploy on Vercel with API env var
-        const vercelToken = process.env.VERCEL_TOKEN;
-        const vercelTeamId = process.env.VERCEL_TEAM_ID; // optional
-        const apiUrl = `https://zonefolio-backend.up.railway.app/portfolio/${user.username}`;
-        const vercelResponse = await axios.post(
-            "https://api.vercel.com/v9/projects",
-            {
-                name: newRepoName,
-                gitRepository: {
-                    type: "github",
-                    repo: `zonefolio-platform/${newRepoName}`,
-                },
-                environmentVariables: [
-                    {
-                        key: "NEXT_PUBLIC_API_URL",
-                        value: apiUrl,
-                        target: ["production", "preview", "development"],
-                    },
-                ],
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${vercelToken}`,
-                },
-                params: vercelTeamId ? { teamId: vercelTeamId } : {},
-            }
-        );
-
-        const deployedUrl = `https://${newRepoName}.vercel.app`;
-
+        // Final response
         res.status(201).json({
             message: "Portfolio created, repo cloned & deployed successfully",
             domain: deployedUrl,
