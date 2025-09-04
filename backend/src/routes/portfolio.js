@@ -62,18 +62,17 @@ router.post("/", async (req, res) => {
         });
 
         // 5) Create new GitHub repo from template
-        const githubToken = process.env.GITHUB_TOKEN; // 🔑 لازم تحطه في env
+        const githubToken = process.env.GITHUB_TOKEN;
         const templateOwner = "zonefolio-platform";
         const templateRepo = "Na8am-Template";
-
-        const newRepoName = `portfolio-${portfolio.id}`;
+        const newRepoName = `${user.username}-zonefolio`;
 
         const githubResponse = await axios.post(
             `https://api.github.com/repos/${templateOwner}/${templateRepo}/generate`,
             {
-                owner: "zonefolio-platform", // تقدر تخليها org أو user جديد
+                owner: "zonefolio-platform", // لازم يكون org/team عندك
                 name: newRepoName,
-                private: false, // خليه false في الـ MVP
+                private: false,
             },
             {
                 headers: {
@@ -83,14 +82,92 @@ router.post("/", async (req, res) => {
             }
         );
 
+        // 6) Deploy on Vercel with API env var
+        const vercelToken = process.env.VERCEL_TOKEN;
+        const vercelTeamId = process.env.VERCEL_TEAM_ID; // optional
+        const apiUrl = `https://zonefolio-backend.up.railway.app/portfolio/${user.username}`;
+        const vercelResponse = await axios.post(
+            "https://api.vercel.com/v9/projects",
+            {
+                name: newRepoName,
+                gitRepository: {
+                    type: "github",
+                    repo: `zonefolio-platform/${newRepoName}`,
+                },
+                environmentVariables: [
+                    {
+                        key: "NEXT_PUBLIC_API_URL",
+                        value: apiUrl,
+                        target: ["production", "preview", "development"],
+                    },
+                ],
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${vercelToken}`,
+                },
+                params: vercelTeamId ? { teamId: vercelTeamId } : {},
+            }
+        );
+
+        const deployedUrl = `https://${newRepoName}.vercel.app`;
+
         res.status(201).json({
-            message: "Portfolio created & repo cloned successfully",
+            message: "Portfolio created, repo cloned & deployed successfully",
+            domain: deployedUrl,
             portfolioId: portfolio.id,
             githubRepo: githubResponse.data.html_url,
+            vercelProject: vercelResponse.data,
         });
     } catch (error) {
         console.error("Portfolio creation error:", error.response?.data || error.message);
         res.status(500).json({ error: error.message, details: error.response?.data });
+    }
+});
+
+
+
+
+
+
+
+router.get("/:username", async (req, res) => {
+    try {
+        const { username } = req.params;
+
+        // 1) Get the user
+        const user = await prisma.saaSUser.findUnique({
+            where: { username },
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // 2) Get portfolio for this user
+        const portfolio = await prisma.portfolio.findFirst({
+            where: { userId: user.id },
+            include: {
+                sections: true, // fetch hero, about, projects, contact
+            },
+        });
+
+        if (!portfolio) {
+            return res.status(404).json({ error: "Portfolio not found" });
+        }
+
+        // 3) Transform sections into desired shape
+        const responseData = {};
+
+        portfolio.sections.forEach((section) => {
+            responseData[section.type] = section.content;
+        });
+
+        // 4) Send formatted JSON
+        res.json(responseData);
+    } catch (error) {
+        console.error("Get portfolio error:", error.message);
+        res.status(500).json({ error: error.message });
     }
 });
 
