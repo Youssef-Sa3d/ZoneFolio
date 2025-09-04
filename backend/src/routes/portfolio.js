@@ -106,7 +106,7 @@ router.post("/", async (req, res) => {
                 dashboardEmail,
                 dashboardPassword,
                 domainType: "Free",
-                deployedUrl, // save deployed project link
+                url: deployedUrl, // save deployed project link
                 sections: {
                     create: [
                         { type: "hero", order: 1, content: hero },
