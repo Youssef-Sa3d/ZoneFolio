@@ -114,7 +114,7 @@ router.post("/verify", async (req, res) => {
 
         res.status(200).json({
             message: "Email verified and logged in successfully",
-            user: { id: user.id, name: user.name, email: user.email }
+            user: { id: user.id, name: user.name, email: user.email , username: user.username }
         });
 
     } catch (error) {
@@ -197,7 +197,7 @@ router.post("/login", async (req, res) => {
 
         res.status(200).json({
             message: "User logged in successfully",
-            user: { id: user.id, name: user.name, email: user.email }
+            user: { id: user.id, name: user.name, email: user.email , username: user.username }
         });
 
     } catch (error) {

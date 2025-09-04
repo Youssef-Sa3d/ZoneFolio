@@ -20,11 +20,12 @@ export default function PortfolioModal({
   templateImage,
   onClose,
 }: PortfolioModalProps) {
-    const { id } = useUserStore();
+    const { id , username } = useUserStore();
     console.log("userId in PortfolioModal:", id);
   const { register, control, handleSubmit } = useForm({
     defaultValues: {
       userId: id,
+      username: username,
       templateId: templateId,
       hero: {
         title: "",
@@ -96,6 +97,7 @@ export default function PortfolioModal({
 
   type FormData = {
     userId: string | null;
+    username: string | null;
     templateId: string;
     hero: {
       title: string;
