@@ -10,7 +10,7 @@ router.post("/", async (req, res) => {
         const formData = req.body;
         const { userId, templateId, hero, about, projects, contact } = formData;
 
-        const user = await prisma.saasUser.findUnique({
+        const user = await prisma.saaSUser.findUnique({
             where: { id: userId },
         });
         if (!user) {
