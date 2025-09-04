@@ -6,68 +6,87 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-    const prismaTx = prisma.$transaction; // in case we want rollback later
-    try {
-        const { userId, username, templateId, hero, about, projects, contact } = req.body;
+    const formData = req.body;
+    const { userId, username, templateId, hero, about, projects, contact } = formData;
 
-        // 1) Validate user & template
+    try {
+        // 1) Check user
         const user = await prisma.saaSUser.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "User not found" });
 
+        // 2) Check template
         const template = await prisma.template.findUnique({ where: { id: templateId } });
         if (!template) return res.status(404).json({ error: "Template not found" });
 
-        // 2) Create GitHub repo
-        let githubRepoUrl, newRepoName;
+        // 3) Generate repo name
+        const newRepoName = `${username}-zonefolio`;
+
+        // 4) Create GitHub repo from template
+        const githubToken = process.env.GITHUB_TOKEN;
+        const templateOwner = "zonefolio-platform"; // personal account
+        const templateRepo = "Na8am-Template";
+
+        let githubResponse;
         try {
-            const githubToken = process.env.GITHUB_TOKEN;
-            const templateOwner = "zonefolio-platform";
-            const templateRepo = "Na8am-Template";
-            newRepoName = `${user.username}-zonefolio`;
-
-            const githubResponse = await axios.post(
+            githubResponse = await axios.post(
                 `https://api.github.com/repos/${templateOwner}/${templateRepo}/generate`,
-                { owner: "zonefolio-platform", name: newRepoName, private: false },
-                { headers: { Authorization: `Bearer ${githubToken}`, Accept: "application/vnd.github+json" } }
+                {
+                    owner: templateOwner,
+                    name: newRepoName,
+                    private: false,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${githubToken}`,
+                        Accept: "application/vnd.github+json",
+                    },
+                }
             );
-
-            githubRepoUrl = githubResponse.data.html_url;
         } catch (err) {
-            return res.status(500).json({ error: "GitHub clone failed", details: err.response?.data || err.message });
+            console.error("GitHub repo creation failed:", err.response?.data || err.message);
+            return res.status(500).json({ error: "GitHub repo creation failed", details: err.response?.data });
         }
 
-        // 3) Deploy on Vercel
+        const githubRepoUrl = githubResponse.data.html_url;
+
+        // 5) Deploy on Vercel
+        const vercelToken = process.env.VERCEL_TOKEN;
+        const vercelTeamId = process.env.VERCEL_TEAM_ID; // optional
+        const apiUrl = `https://zonefolio-backend.up.railway.app/portfolio/${username}`;
+
         let deployedUrl;
         try {
-            const vercelToken = process.env.VERCEL_TOKEN;
-            const vercelTeamId = process.env.VERCEL_TEAM_ID;
-            const apiUrl = `https://zonefolio-backend.up.railway.app/portfolio/${user.username}`;
-
             const vercelResponse = await axios.post(
                 "https://api.vercel.com/v9/projects",
                 {
                     name: newRepoName,
-                    gitRepository: { type: "github", repo: `zonefolio-platform/${newRepoName}` },
+                    gitRepository: {
+                        type: "github",
+                        repo: `${templateOwner}/${newRepoName}`,
+                    },
                     environmentVariables: [
-                        { key: "NEXT_PUBLIC_DATA_API_URL", value: apiUrl, target: ["production", "preview", "development"] }
+                        {
+                            key: "NEXT_PUBLIC_DATA_API_URL",
+                            value: apiUrl,
+                            target: ["production", "preview", "development"],
+                        },
                     ],
                 },
                 {
-                    headers: { Authorization: `Bearer ${vercelToken}` },
+                    headers: {
+                        Authorization: `Bearer ${vercelToken}`,
+                    },
                     params: vercelTeamId ? { teamId: vercelTeamId } : {},
                 }
             );
 
             deployedUrl = `https://${newRepoName}.vercel.app`;
         } catch (err) {
-            console.error("Vercel error:", err.response?.data || err.message);
-            return res.status(500).json({
-                error: "Vercel deploy failed",
-                details: err.response?.data || err.message,
-            });
+            console.error("Vercel deploy failed:", err.response?.data || err.message);
+            return res.status(500).json({ error: "Vercel deploy failed", details: err.response?.data });
         }
 
-        // 4) Only now → create portfolio in DB
+        // 6) Create portfolio in DB after all success
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const signs = ["!", "@", "#", "$", "%", "&"];
         const randomSign = signs[Math.floor(Math.random() * signs.length)];
@@ -81,31 +100,37 @@ router.post("/", async (req, res) => {
                 dashboardEmail,
                 dashboardPassword,
                 domainType: "Free",
-                deployedUrl, // add deployed url to DB
+                url: deployedUrl,
             },
         });
 
+        const sections = [
+            { type: "hero", order: 1, content: hero },
+            { type: "about", order: 2, content: about },
+            { type: "projects", order: 3, content: projects },
+            { type: "contact", order: 4, content: contact },
+        ];
+
         await prisma.portfolioSection.createMany({
-            data: [
-                { portfolioId: portfolio.id, type: "hero", order: 1, content: hero },
-                { portfolioId: portfolio.id, type: "about", order: 2, content: about },
-                { portfolioId: portfolio.id, type: "projects", order: 3, content: projects },
-                { portfolioId: portfolio.id, type: "contact", order: 4, content: contact },
-            ],
+            data: sections.map(({ type, order, content }) => ({
+                portfolioId: portfolio.id,
+                type,
+                order,
+                content,
+            })),
         });
 
         res.status(201).json({
-            message: "Portfolio created & deployed",
-            domain: deployedUrl,
+            message: "Portfolio created, repo cloned & deployed successfully",
             portfolioId: portfolio.id,
             githubRepo: githubRepoUrl,
+            deployedUrl,
         });
-    } catch (err) {
-        console.error("Portfolio creation error:", err);
-        res.status(500).json({ error: err.message });
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        res.status(500).json({ error: "Unexpected error", details: error.message });
     }
 });
-
 
 
 
