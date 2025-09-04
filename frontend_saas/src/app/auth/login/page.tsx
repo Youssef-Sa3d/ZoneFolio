@@ -9,6 +9,8 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore"; // <-- Zustand store
+import { useUserStore } from "@/store/userStore"; // <-- Zustand store
+
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,6 +20,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const { setUser } = useUserStore();
   const router = useRouter();
   const { checkAuth } = useAuthStore();
 
@@ -39,7 +42,9 @@ export default function LoginPage() {
         },
         { withCredentials: true } // send cookies
       );
+      setUser(res.data.user); // Update global user state
       return res.data;
+      
     },
     onSuccess: async () => {
       // refresh global auth state

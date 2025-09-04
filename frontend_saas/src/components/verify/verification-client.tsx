@@ -9,6 +9,8 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { useUserStore } from "@/store/userStore"; // <-- Zustand store
+
 
 const verificationSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,6 +20,7 @@ const verificationSchema = z.object({
 type VerificationFormData = z.infer<typeof verificationSchema>;
 
 export default function VerificationPageClient() {
+  const { setUser } = useUserStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email");
@@ -45,6 +48,7 @@ export default function VerificationPageClient() {
         { email: data.email, code: data.code },
         { withCredentials: true }
       );
+      setUser(res.data.user); // Update global user state
       return res.data;
     },
     onSuccess: () => router.push("/"),

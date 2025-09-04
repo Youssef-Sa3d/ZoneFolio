@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { FiMenu, FiX } from "react-icons/fi";
 import { useAuthStore } from "../store/authStore";
-import { s } from "motion/react-client";
+import { useUserStore } from "@/store/userStore"; // <-- Zustand store
+
 
 const Header = () => {
+  const { setUser } = useUserStore();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, checkAuth, setIsAuthenticated } = useAuthStore();
 
@@ -51,6 +54,7 @@ const Header = () => {
       });
       setIsAuthenticated(false);
       setIsMobileMenuOpen(false);
+      setUser(null); // Clear user state on logout
     } catch (err) {
       console.error("Logout failed", err);
     }
