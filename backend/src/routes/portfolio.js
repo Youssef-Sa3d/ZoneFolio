@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 
-router.post("/portfolio", async (req, res) => {
+router.post("/", async (req, res) => {
     try {
         const formData = req.body;
         const { userId, templateId, hero, about, projects, contact } = formData;
