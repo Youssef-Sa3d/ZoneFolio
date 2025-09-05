@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 
+
 router.post("/", async (req, res) => {
     const formData = req.body;
     const { userId, username, templateId, hero, about, projects, contact } = formData;
@@ -46,8 +47,6 @@ router.post("/", async (req, res) => {
         const githubRepoUrl = githubResponse.data.html_url;
 
         // 4) Create Project on Vercel linked with GitHub
-        const apiUrl = `${process.env.API_BASE_URL}/portfolio/${username}`;
-
         const vercelProjectRes = await axios.post(
             "https://api.vercel.com/v9/projects",
             {
@@ -57,14 +56,6 @@ router.post("/", async (req, res) => {
                     repo: `zonefolio-platform/${newRepoName}`,
                 },
                 framework: "nextjs",
-                environmentVariables: [
-                    {
-                        key: "NEXT_PUBLIC_DATA_API_URL",
-                        value: apiUrl,
-                        target: ["production", "preview", "development"],
-                        type: "encrypted",
-                    },
-                ],
             },
             {
                 headers: {
@@ -75,12 +66,33 @@ router.post("/", async (req, res) => {
             }
         );
 
-        // 5) Trigger Deployment
+        const projectId = vercelProjectRes.data.id;
+
+        // 5) Add Environment Variable
+        const apiUrl = `${process.env.API_BASE_URL}/portfolio/${username}`;
+        await axios.post(
+            `https://api.vercel.com/v9/projects/${newRepoName}/env`,
+            {
+                key: "NEXT_PUBLIC_DATA_API_URL",
+                value: apiUrl,
+                type: "encrypted",
+                target: ["production", "preview", "development"],
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${vercelToken}`,
+                    "Content-Type": "application/json",
+                },
+                params: vercelTeamId ? { teamId: vercelTeamId } : {},
+            }
+        );
+
+        // 6) Trigger Deployment
         const vercelDeployRes = await axios.post(
             "https://api.vercel.com/v13/deployments",
             {
                 name: newRepoName,
-                project: vercelProjectRes.data.id,
+                project: projectId,
                 target: "production",
             },
             {
@@ -96,7 +108,7 @@ router.post("/", async (req, res) => {
             ? vercelDeployRes.data.url
             : `https://${vercelDeployRes.data.url}`;
 
-        // 6) Generate dashboard credentials
+        // 7) Generate dashboard credentials
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const signs = ["!", "@", "#", "$", "%", "&"];
         const randomSign = signs[Math.floor(Math.random() * signs.length)];
@@ -104,7 +116,7 @@ router.post("/", async (req, res) => {
         const dashboardEmail = `${username}${randomNum}@zonefolio.com`;
         const dashboardPassword = `${username}${randomNum}${randomSign}`;
 
-        // 7) Save portfolio to DB **after everything succeeds**
+        // 8) Save portfolio to DB **after everything succeeds**
         const portfolio = await prisma.portfolio.create({
             data: {
                 userId,
@@ -116,7 +128,7 @@ router.post("/", async (req, res) => {
             },
         });
 
-        // 8) Store portfolio sections
+        // 9) Store portfolio sections
         const sections = [
             { type: "hero", order: 1, content: hero },
             { type: "about", order: 2, content: about },
