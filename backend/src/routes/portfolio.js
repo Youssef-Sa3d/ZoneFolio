@@ -2,6 +2,7 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const axios = require("axios");
 const {sendWelcomePortfolioEmail} = require("../utils/sendEmail");
+const { uploadImage } = require("../utils/cloudinary");
 
 
 const prisma = new PrismaClient();
@@ -26,7 +27,38 @@ router.post("/", async (req, res) => {
         const template = await prisma.template.findUnique({ where: { id: templateId } });
         if (!template) return res.status(404).json({ error: "Template not found" });
 
-        // 3) Generate new GitHub repo from template
+        // 3) Upload images to Cloudinary
+        console.log('Starting image uploads to Cloudinary...');
+        
+        // Upload hero image if exists
+        if (hero.image && hero.image.startsWith('data:image/')) {
+            console.log('Uploading hero image...');
+            hero.image = await uploadImage(hero.image, `zonefolio/${username}/hero`, `${username}-hero`);
+        }
+        
+        // Upload about image if exists
+        if (about.image && about.image.startsWith('data:image/')) {
+            console.log('Uploading about image...');
+            about.image = await uploadImage(about.image, `zonefolio/${username}/about`, `${username}-about`);
+        }
+        
+        // Upload project images if they exist
+        if (projects && Array.isArray(projects)) {
+            for (let i = 0; i < projects.length; i++) {
+                if (projects[i].image && projects[i].image.startsWith('data:image/')) {
+                    console.log(`Uploading project ${i + 1} image...`);
+                    projects[i].image = await uploadImage(
+                        projects[i].image, 
+                        `zonefolio/${username}/projects`, 
+                        `${username}-project-${i + 1}`
+                    );
+                }
+            }
+        }
+        
+        console.log('All images uploaded successfully to Cloudinary');
+
+        // 4) Generate new GitHub repo from template
         const templateOwner = "zonefolio-platform";
         const templateRepo = "Na8am-Template";
         const newRepoName = `${username}-zonefolio`;
@@ -48,7 +80,7 @@ router.post("/", async (req, res) => {
 
         const githubRepoUrl = githubResponse.data.html_url;
 
-        // 4) Create Project on Vercel linked with GitHub
+        // 5) Create Project on Vercel linked with GitHub
         const vercelProjectRes = await axios.post(
             "https://api.vercel.com/v9/projects",
             {
@@ -70,7 +102,7 @@ router.post("/", async (req, res) => {
 
         const projectId = vercelProjectRes.data.id;
 
-        // 5) Add Environment Variable
+        // 6) Add Environment Variable
         const apiUrl = `${process.env.API_BASE_URL}/portfolio/${username}`;
         await axios.post(
             `https://api.vercel.com/v9/projects/${newRepoName}/env`,
@@ -89,7 +121,7 @@ router.post("/", async (req, res) => {
             }
         );
 
-        // 6) Trigger Deployment
+        // 7) Trigger Deployment
         const vercelDeployRes = await axios.post(
             "https://api.vercel.com/v13/deployments",
             {
@@ -114,7 +146,7 @@ router.post("/", async (req, res) => {
 
         const deployedUrl = `https://${username}-zonefolio.vercel.app`;
 
-        // 7) Generate dashboard credentials
+        // 8) Generate dashboard credentials
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const signs = ["!", "@", "#", "$", "%", "&"];
         const randomSign = signs[Math.floor(Math.random() * signs.length)];
@@ -122,7 +154,7 @@ router.post("/", async (req, res) => {
         const dashboardEmail = `${username}${randomNum}@zonefolio.com`;
         const dashboardPassword = `${username}${randomNum}${randomSign}`;
 
-        // 8) Save portfolio to DB **after everything succeeds**
+        // 9) Save portfolio to DB **after everything succeeds**
         const portfolio = await prisma.portfolio.create({
             data: {
                 userId,
@@ -134,7 +166,7 @@ router.post("/", async (req, res) => {
             },
         });
 
-        // 9) Store portfolio sections
+        // 10) Store portfolio sections
         const sections = [
             { type: "hero", order: 1, content: hero },
             { type: "about", order: 2, content: about },
@@ -151,7 +183,7 @@ router.post("/", async (req, res) => {
             })),
         });
 
-        // 10) Send email with portfolio & dashboard details
+        // 11) Send email with portfolio & dashboard details
         try {
             await sendWelcomePortfolioEmail(
                 user.email,
@@ -165,7 +197,7 @@ router.post("/", async (req, res) => {
             // Not critical, so we don't fail the whole process
         }
 
-        // 11) Return success response
+        // 12) Return success response
 
         res.status(201).json({
             message: "Portfolio created, repo cloned & deployed successfully , email sent",
