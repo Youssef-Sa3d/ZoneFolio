@@ -17,16 +17,29 @@ const allowedOrigins = ["http://localhost:8080", "https://zonefolio.vercel.app"]
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow server-to-server or curl requests
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+      if (!origin) return callback(null, true);
+
+      // Allow localhost for dev
+      if (origin.startsWith("http://localhost")) {
+        return callback(null, true);
       }
+
+      // Allow main app
+      if (origin === "https://zonefolio.vercel.app") {
+        return callback(null, true);
+      }
+
+      // Allow dynamic subdomains *.vercel.app
+      if (/https:\/\/[a-z0-9-]+-zonefolio\.vercel\.app/.test(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true, // <— important
+    credentials: true,
   })
 );
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
