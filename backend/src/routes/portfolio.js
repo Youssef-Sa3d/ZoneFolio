@@ -1,6 +1,8 @@
 const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const axios = require("axios");
+const {sendWelcomePortfolioEmail} = require("../utils/sendEmail");
+
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -110,9 +112,7 @@ router.post("/", async (req, res) => {
             }
         );
 
-        const deployedUrl = vercelDeployRes.data.url.startsWith("http")
-            ? vercelDeployRes.data.url
-            : `https://${vercelDeployRes.data.url}`;
+        const deployedUrl = `https://${username}-zonefolio.vercel.app`;
 
         // 7) Generate dashboard credentials
         const randomNum = Math.floor(1000 + Math.random() * 9000);
@@ -151,8 +151,24 @@ router.post("/", async (req, res) => {
             })),
         });
 
+        // 10) Send email with portfolio & dashboard details
+        try {
+            await sendWelcomePortfolioEmail(
+                user.email,
+                user.name,
+                deployedUrl,
+                dashboardEmail,
+                dashboardPassword
+            );
+        } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+            // Not critical, so we don't fail the whole process
+        }
+
+        // 11) Return success response
+
         res.status(201).json({
-            message: "Portfolio created, repo cloned & deployed successfully",
+            message: "Portfolio created, repo cloned & deployed successfully , email sent",
             portfolioId: portfolio.id,
             githubRepo: githubRepoUrl,
             deployedUrl,

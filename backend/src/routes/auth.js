@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const { PrismaClient } = require("@prisma/client");
-const sendVerificationEmail = require("../utils/sendEmail");
+const {sendVerificationEmail} = require("../utils/sendEmail");
 
 const prisma = new PrismaClient();
 const router = express.Router();
