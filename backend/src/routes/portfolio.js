@@ -94,6 +94,12 @@ router.post("/", async (req, res) => {
                 name: newRepoName,
                 project: projectId,
                 target: "production",
+                gitSource: {
+                    type: "github",
+                    repo: `zonefolio-platform/${newRepoName}`,
+                    ref: "main",
+                    repoId: githubResponse.data.id,
+                },
             },
             {
                 headers: {
