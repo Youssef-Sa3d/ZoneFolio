@@ -45,36 +45,57 @@ router.post("/", async (req, res) => {
 
         const githubRepoUrl = githubResponse.data.html_url;
 
-        // 4) Deploy on Vercel
+        // 4) Create Project on Vercel linked with GitHub
         const apiUrl = `${process.env.API_BASE_URL}/portfolio/${username}`;
-        const vercelDeployResponse = await axios.post(
-            "https://api.vercel.com/v13/deployments",
+
+        const vercelProjectRes = await axios.post(
+            "https://api.vercel.com/v9/projects",
             {
                 name: newRepoName,
-                gitSource: {
+                gitRepository: {
                     type: "github",
-                    repoId: githubResponse.data.id,
-                    org: "zonefolio-platform",
-                    repo: newRepoName,
-                    branch: "main",
+                    repo: `zonefolio-platform/${newRepoName}`,
                 },
-                target: "production",
                 framework: "nextjs",
-                env: [
-                    { key: "NEXT_PUBLIC_DATA_API_URL", value: apiUrl },
+                environmentVariables: [
+                    {
+                        key: "NEXT_PUBLIC_DATA_API_URL",
+                        value: apiUrl,
+                        target: ["production", "preview", "development"],
+                    },
                 ],
             },
             {
-                headers: { Authorization: `Bearer ${vercelToken}`, "Content-Type": "application/json" },
+                headers: {
+                    Authorization: `Bearer ${vercelToken}`,
+                    "Content-Type": "application/json",
+                },
                 params: vercelTeamId ? { teamId: vercelTeamId } : {},
             }
         );
 
-        const deployedUrl = vercelDeployResponse.data.url.startsWith("http")
-            ? vercelDeployResponse.data.url
-            : `https://${vercelDeployResponse.data.url}`;
+        // 5) Trigger Deployment
+        const vercelDeployRes = await axios.post(
+            "https://api.vercel.com/v13/deployments",
+            {
+                name: newRepoName,
+                project: vercelProjectRes.data.id,
+                target: "production",
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${vercelToken}`,
+                    "Content-Type": "application/json",
+                },
+                params: vercelTeamId ? { teamId: vercelTeamId } : {},
+            }
+        );
 
-        // 5) Generate dashboard credentials
+        const deployedUrl = vercelDeployRes.data.url.startsWith("http")
+            ? vercelDeployRes.data.url
+            : `https://${vercelDeployRes.data.url}`;
+
+        // 6) Generate dashboard credentials
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         const signs = ["!", "@", "#", "$", "%", "&"];
         const randomSign = signs[Math.floor(Math.random() * signs.length)];
@@ -82,7 +103,7 @@ router.post("/", async (req, res) => {
         const dashboardEmail = `${username}${randomNum}@zonefolio.com`;
         const dashboardPassword = `${username}${randomNum}${randomSign}`;
 
-        // 6) Save portfolio to DB **after everything succeeds**
+        // 7) Save portfolio to DB **after everything succeeds**
         const portfolio = await prisma.portfolio.create({
             data: {
                 userId,
@@ -94,7 +115,7 @@ router.post("/", async (req, res) => {
             },
         });
 
-        // 7) Store portfolio sections
+        // 8) Store portfolio sections
         const sections = [
             { type: "hero", order: 1, content: hero },
             { type: "about", order: 2, content: about },
