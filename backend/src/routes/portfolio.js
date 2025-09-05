@@ -130,7 +130,7 @@ router.post("/", async (req, res) => {
                 dashboardEmail,
                 dashboardPassword,
                 domainType: "Free",
-                deployedUrl,
+                url: deployedUrl,
             },
         });
 
