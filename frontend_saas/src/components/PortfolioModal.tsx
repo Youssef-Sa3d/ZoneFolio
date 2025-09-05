@@ -284,7 +284,7 @@ export default function PortfolioModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full h-[95vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
@@ -300,18 +300,22 @@ export default function PortfolioModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
           {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <Image
-                src={templateImage}
-                alt={templateName}
-                width={400}
-                height={300}
-                className="rounded-lg"
-              />
-              <div className="space-y-6">
+            <div className="space-y-6">
+              {/* Template Preview */}
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Template Preview</h3>
+                <Image
+                  src={templateImage}
+                  alt={templateName}
+                  width={400}
+                  height={300}
+                  className="rounded-lg mx-auto"
+                />
+              </div>
+              
             {/* Hero Section */}
              <section className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
                <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
@@ -839,7 +843,6 @@ export default function PortfolioModal({
                 </button>
               </div>
             </section>
-              </div>
             </div>
           </div>
 
