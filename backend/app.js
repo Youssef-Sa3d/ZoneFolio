@@ -12,7 +12,6 @@ const portfolioRoutes = require("./src/routes/portfolio");
 const app = express();
 const PORT = process.env.PORT || 8080; 
 
-const allowedOrigins = ["http://localhost:8080", "https://zonefolio.vercel.app"];
 
 app.use(
   cors({
