@@ -21,7 +21,6 @@ export default function PortfolioModal({
   onClose,
 }: PortfolioModalProps) {
   const { id, username } = useUserStore();
-  console.log("userId in PortfolioModal:", id);
   
   // Image upload states
   const [heroImage, setHeroImage] = useState<string | null>(null);
@@ -240,7 +239,7 @@ export default function PortfolioModal({
       );
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       setIsSuccess(true);
     },
     onError: (error: unknown) => {
@@ -271,7 +270,6 @@ export default function PortfolioModal({
   const onSubmit = (data: FormData) => {
     // Transform empty strings to null
     const transformedData = transformEmptyToNull(data) as FormData;
-    console.log('Transformed data:', transformedData);
     mutation.mutate(transformedData);
   };
 
