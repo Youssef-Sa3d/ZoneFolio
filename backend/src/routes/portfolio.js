@@ -62,6 +62,7 @@ router.post("/", async (req, res) => {
                         key: "NEXT_PUBLIC_DATA_API_URL",
                         value: apiUrl,
                         target: ["production", "preview", "development"],
+                        type: "encrypted",
                     },
                 ],
             },
